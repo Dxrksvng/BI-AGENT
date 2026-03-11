@@ -1,0 +1,19 @@
+# config.yaml — ไฟล์ที่บริษัทแก้ไขก่อนรัน Docker
+# ไฟล์นี้เก็บอยู่ใน server บริษัท ไม่ได้ส่งขึ้น cloud
+
+database:
+  type: postgres          # postgres หรือ mysql
+  host: localhost
+  port: 5432
+  name: your_database
+  username: readonly_user
+  password: your_password  # ใช้ read-only user เท่านั้น!
+
+agent:
+  api_url: https://your-bi-agent.com   # URL ของ BI Agent ที่ deploy
+  api_key: your_company_api_key        # รับจากหน้า Settings ใน BI Agent
+  tables:
+    - sales
+    - customers
+    - orders
+  sync_interval_minutes: 60            # sync ทุกกี่นาที

@@ -1,0 +1,17 @@
+fastapi
+uvicorn[standard]
+pandas
+sqlalchemy
+pymysql
+anthropic
+python-dotenv
+pydantic
+plotly
+kaleido
+weasyprint
+xhtml2pdf
+psycopg2-binary
+python-multipart
+schedule
+pyyaml
+requests

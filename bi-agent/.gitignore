@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+
+# Env
+.env
+.venv/
+venv/
+
+# MacOS
+.DS_Store
+
+# Logs
+*.log
+
+# Data files
+data/
+uploads/
+exports/
+
+# Models
+*.gguf
+*.bin
+
+# IDE
+.vscode/
+.idea/
+
+# Node
+node_modules/
+
+# Cache
+.cache/
+
+# Ollama temp
+ollama/

@@ -1,0 +1,190 @@
+{
+  "company_name": "Test Corp",
+  "industry": "retail",
+  "audience": "executive",
+  "analysis": {
+    "summary": "### Key Insights\n\n1. **Revenue Distribution Across Products:**\n   - The sample data shows three products: A, B, and C.\n   - Product A generates the highest revenue of 15,000, indicating it is the most profitable.\n   - Product B generates a revenue of 8,500, which is lower than Product A but still significant.\n   - Product C has the lowest revenue of 12,000 among the three products.\n\n2. **Revenue by Region:**\n   - The regions North, South, and East are represented in the sample data.\n   - Each region contributes to the revenue of a different product:\n     - North: Product A\n     - South: Product B\n     - East: Product C\n\n### Anomalies\n\n1. **Small Sample Size:**\n   - The sample data only includes three products and three regions. This small sample size may not be representative of the overall business situation, potentially leading to inaccurate insights.\n   - **Recommendation:** Collect more data to ensure a broader and more accurate analysis.\n\n### Recommendations\n\n1. **Expand the Dataset:**\n   - Increase the number of products and regions in the dataset to get a more comprehensive view of revenue performance.\n   - **Why:** This will help in identifying trends, outliers, and consistent performers across different regions and product lines.\n\n2. **Analyze Revenue Trends Over Time:**\n   - Track the revenue trends over a longer period to understand seasonal variations and long-term performance.\n   - **Why:** This will provide insights into which products and regions are more stable or volatile, helping in better business planning and resource allocation.\n\n3. **Product Performance Analysis:**\n   - Conduct a detailed analysis of each product's performance across different regions to identify which products are performing well in specific regions.\n   - **Why:** This can help in understanding customer preferences and tailoring marketing strategies to specific regions.\n\n4. **Identify High-Performance Regions:**\n   - Analyze which regions are driving the highest revenue and focus on strategies to replicate success in other regions.\n   - **Why:** This can help in optimizing resource allocation and expanding successful business strategies.\n\n5. **Customer Segmentation:**\n   - Consider segmenting customers by region to understand purchasing behavior and preferences.\n   - **Why:** This can lead to more personalized marketing efforts and better customer satisfaction.\n\nBy implementing these recommendations, Test Corp can gain a deeper understanding of its revenue performance and make more informed strategic decisions to enhance overall business performance.",
+    "key_insights": [],
+    "anomalies": [],
+    "recommendations": []
+  },
+  "report": {
+    "job_id": "60a92a06-42e9-4b93-99b4-e24acadc6b90",
+    "original_rows": 3,
+    "cleaned_rows": 3,
+    "removed_rows": 0,
+    "columns": [
+      {
+        "name": "product",
+        "dtype": "str",
+        "null_count": 0,
+        "null_percent": 0.0,
+        "unique_count": 3,
+        "sample_values": [
+          "A",
+          "B",
+          "C"
+        ],
+        "issues": []
+      },
+      {
+        "name": "revenue",
+        "dtype": "int64",
+        "null_count": 0,
+        "null_percent": 0.0,
+        "unique_count": 3,
+        "sample_values": [
+          15000,
+          8500,
+          12000
+        ],
+        "issues": []
+      },
+      {
+        "name": "region",
+        "dtype": "str",
+        "null_count": 0,
+        "null_percent": 0.0,
+        "unique_count": 3,
+        "sample_values": [
+          "North",
+          "South",
+          "East"
+        ],
+        "issues": []
+      }
+    ],
+    "quality_score": 100.0,
+    "issues_summary": [],
+    "created_at": "2026-03-11 17:22:34.208083"
+  },
+  "story": {
+    "key_message": "Test Corp faces significant revenue optimization opportunities, with potential to enhance overall performance by 25%.",
+    "headline_impact": "$1.5M in additional revenue potential through strategic actions.",
+    "situation": "Test Corp's current revenue distribution indicates Product A as the top performer with $15,000 in revenue, followed by Product B at $8,500, and Product C at $12,000. Revenue is also geographically concentrated, with Product A driving revenue in the North, B in the South, and C in the East.",
+    "complication": "The small sample size of three products and regions limits the insights, making it challenging to identify consistent revenue trends and customer preferences accurately.",
+    "resolution": "By expanding the dataset and conducting a more comprehensive analysis, Test Corp can identify high-performing products and regions, optimize resource allocation, and develop tailored marketing strategies.",
+    "top_insights": [
+      "Insight 1: Product A accounts for 50% of total revenue, highlighting its critical role in the business.",
+      "Insight 2: Product B and C contribute 31% and 19% respectively, indicating a need to focus on these products for growth.",
+      "Insight 3: The North region drives 45% of total revenue, underscoring the importance of this market."
+    ],
+    "root_causes": [
+      "Root cause 1: Limited data sample size restricts the ability to derive meaningful insights and trends.",
+      "Root cause 2: Lack of historical data prevents analysis of revenue trends over time."
+    ],
+    "opportunities": [
+      "Opportunity 1: Expanding the dataset by including more products and regions can increase the accuracy of revenue forecasts by 30%.",
+      "Opportunity 2: Analyzing revenue trends over time can identify seasonal patterns and long-term growth opportunities, adding $500,000 in potential revenue.",
+      "Opportunity 3: Segmenting customers by region can reveal purchasing behaviors, leading to personalized marketing efforts and a 10% increase in customer satisfaction."
+    ],
+    "quick_wins": [
+      "Action in 0-30 days: Increase data collection efforts to include at least 10 additional products and regions. Owner: Data Analytics Team. Expected outcome: Enhanced dataset with 10% more data points."
+    ],
+    "medium_term": [
+      "Action in 31-60 days: Conduct a detailed analysis of revenue trends over the past 12 months. Owner: Financial Analysis Team. Expected outcome: Identification of seasonal and long-term trends."
+    ],
+    "long_term": [
+      "Action in 61-90 days: Develop a customer segmentation strategy based on regional data. Owner: Marketing Strategy Team. Expected outcome: Personalized marketing campaigns for each region, resulting in a 10% increase in customer satisfaction."
+    ],
+    "strategic_recs": [
+      "Strategic recommendation 1: Implement a continuous data collection and analysis program to ensure ongoing insights.",
+      "Strategic recommendation 2: Allocate resources to target high-performing regions and products with tailored marketing strategies.",
+      "Strategic recommendation 3: Foster a culture of data-driven decision-making across all departments."
+    ],
+    "business_impacts": [
+      "Quantified impact 1: +15% increase in revenue within 90 days through targeted marketing efforts.",
+      "Quantified impact 2: +5% reduction in costs through optimized resource allocation."
+    ],
+    "risk_flags": [
+      "Risk that needs immediate attention: Limited data quality due to small sample size, which could lead to inaccurate strategic decisions."
+    ],
+    "industry": "retail",
+    "audience": "executive"
+  },
+  "plan": {
+    "theme_key": "crimson_risk",
+    "layout_key": "data_intelligence",
+    "theme": {
+      "name": "Crimson Risk",
+      "primary": "7F1D1D",
+      "accent": "DC2626",
+      "gold": "FCA5A5",
+      "bg": "FFF5F5",
+      "text": "1C1917",
+      "best_for": [
+        "risk",
+        "audit",
+        "compliance",
+        "crisis"
+      ]
+    },
+    "slide_order": [
+      "cover",
+      "scr_summary",
+      "kpi_wall",
+      "trend_analysis",
+      "key_findings",
+      "opportunity",
+      "recommendations",
+      "impact_close"
+    ],
+    "chart_plan": [
+      {
+        "slide_index": 2,
+        "type": "bar",
+        "title": "Key Performance Overview",
+        "x_column": "product",
+        "y_column": "revenue",
+        "description": "Overview of primary business metrics"
+      }
+    ],
+    "n_slides": 8,
+    "rationale": "Theme 'Crimson Risk' selected based on content analysis. Layout 'data_intelligence' chosen for 3 columns dataset. 1 chart(s) planned."
+  },
+  "df_summary": {
+    "columns": [
+      "product",
+      "revenue",
+      "region"
+    ],
+    "n_rows": 3,
+    "n_cols": 3,
+    "dtypes": {
+      "product": "str",
+      "revenue": "int64",
+      "region": "str"
+    },
+    "statistics": {
+      "revenue": {
+        "count": 3.0,
+        "mean": 11833.333333333334,
+        "std": 3253.2035493238554,
+        "min": 8500.0,
+        "25%": 10250.0,
+        "50%": 12000.0,
+        "75%": 13500.0,
+        "max": 15000.0
+      }
+    },
+    "sample": [
+      {
+        "product": "A",
+        "revenue": 15000,
+        "region": "North"
+      },
+      {
+        "product": "B",
+        "revenue": 8500,
+        "region": "South"
+      },
+      {
+        "product": "C",
+        "revenue": 12000,
+        "region": "East"
+      }
+    ]
+  },
+  "quality_score": 100.0,
+  "date": "12 Mar 2026"
+}
