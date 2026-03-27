@@ -1,0 +1,8 @@
+mnt/
+__pycache__/
+*.pyc
+.env
+*.pptx
+*.pdf
+reports/
+.DS_Store

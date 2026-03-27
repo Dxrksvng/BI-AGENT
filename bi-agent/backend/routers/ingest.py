@@ -1,13 +1,14 @@
 """
 routers/ingest.py
-Layer ที่ 1: รับข้อมูลจาก database หรือ CSV ของบริษัท
+Layer 1: Receive data from CSV upload or Docker Agent
 
 Endpoints:
-  POST /ingest/upload-csv — อัปโหลด CSV (ทดสอบได้เลยไม่ต้องมี DB)
-  POST /ingest/connect    — ทดสอบเชื่อมต่อ DB
-  POST /ingest/fetch      — ดึงข้อมูลจากตาราง
-  GET  /ingest/jobs       — ดูสถานะ jobs ทั้งหมด
-  GET  /ingest/jobs/{id}  — ดูสถานะ job
+  POST /ingest/upload-csv — Upload CSV file
+  POST /ingest/connect    — Test DB connection
+  POST /ingest/fetch      — Fetch table from DB
+  GET  /ingest/jobs       — List all jobs
+  GET  /ingest/jobs/{id}  — Get job status
+  POST /ingest/push       — Receive data from Docker Agent
 """
 import io
 import pandas as pd
@@ -27,58 +28,44 @@ router = APIRouter()
 
 
 # ---------------------------------------------------------------
-# CSV UPLOAD — ใช้ทดสอบได้เลยโดยไม่ต้องมี database จริง
+# CSV UPLOAD
 # ---------------------------------------------------------------
 
-@router.post("/upload-csv", summary="📂 อัปโหลด CSV ไฟล์")
+@router.post("/upload-csv", summary="Upload CSV file")
 async def upload_csv(file: UploadFile = File(...)):
     """
-    อัปโหลด CSV แล้วเก็บเป็น job
-    ใช้ทดสอบ full pipeline โดยไม่ต้องต่อ database จริง
+    Upload CSV and store as job.
+    Use for testing the full pipeline without a real database.
 
-    วิธีใช้:
-      1. กด 'Try it out'
-      2. เลือกไฟล์ CSV
-      3. กด Execute
-      4. copy job_id ที่ได้ไปใช้ใน /pipeline/clean
+    Steps:
+      1. Upload CSV file
+      2. Copy the job_id returned
+      3. POST /pipeline/clean with the job_id
     """
-    # ตรวจสอบนามสกุลไฟล์
     if not file.filename.endswith(".csv"):
-        raise HTTPException(status_code=400, detail="รับเฉพาะไฟล์ .csv เท่านั้น")
+        raise HTTPException(status_code=400, detail="Only .csv files are accepted")
 
-    # อ่านไฟล์
     contents = await file.read()
     try:
         df = pd.read_csv(io.StringIO(contents.decode("utf-8")))
     except UnicodeDecodeError:
-        # ลอง encoding อื่นถ้า utf-8 ไม่ได้
         df = pd.read_csv(io.StringIO(contents.decode("tis-620", errors="replace")))
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"อ่านไฟล์ไม่ได้: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Cannot read file: {str(e)}")
 
     if df.empty:
-        raise HTTPException(status_code=400, detail="ไฟล์ CSV ว่างเปล่า")
+        raise HTTPException(status_code=400, detail="CSV file is empty")
 
-    # สร้าง job และเก็บข้อมูล
     job_id = job_store.create()
     job_store.update(job_id, data=df, status="done")
 
-    # รัน full pipeline อัตโนมัติ
-    background_tasks.add_task(
-        run_auto_pipeline,
-        job_id=job_id,
-        company_name=req.headers.get("X-Company", "Company"),
-        industry=req.headers.get("X-Industry", "general"),
-        table_name=request.table_name,
-    )
-
     return {
-        "job_id":   job_id,
-        "status":   "done",
-        "filename": file.filename,
-        "rows":     len(df),
-        "columns":  list(df.columns),
-        "message":  f"✅ อัปโหลดสำเร็จ! {len(df)} แถว, {len(df.columns)} คอลัมน์",
+        "job_id":    job_id,
+        "status":    "done",
+        "filename":  file.filename,
+        "rows":      len(df),
+        "columns":   list(df.columns),
+        "message":   f"Upload successful — {len(df)} rows, {len(df.columns)} columns",
         "next_step": f"POST /pipeline/clean  body: {{\"job_id\": \"{job_id}\", \"target_table\": \"{file.filename}\"}}",
     }
 
@@ -88,13 +75,12 @@ async def upload_csv(file: UploadFile = File(...)):
 # ---------------------------------------------------------------
 
 class FetchRequest(BaseModel):
-    """คำขอดึงข้อมูลจากตาราง"""
     db_config:  DBConnectionRequest
     table_name: str
     limit:      Optional[int] = None
 
 
-@router.post("/connect", summary="ทดสอบเชื่อมต่อฐานข้อมูล")
+@router.post("/connect", summary="Test database connection")
 def test_connection(request: DBConnectionRequest):
     try:
         connector = DBConnector(request)
@@ -102,16 +88,16 @@ def test_connection(request: DBConnectionRequest):
         connector.close()
         return {
             "status":  "success",
-            "message": f"เชื่อมต่อสำเร็จ พบ {len(tables)} ตาราง",
+            "message": f"Connected successfully — {len(tables)} tables found",
             "tables":  tables,
         }
     except ConnectionError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"เกิดข้อผิดพลาด: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
 
-@router.post("/fetch", response_model=IngestResponse, summary="ดึงข้อมูลจากตาราง")
+@router.post("/fetch", response_model=IngestResponse, summary="Fetch table from database")
 def fetch_table(request: FetchRequest, background_tasks: BackgroundTasks):
     job_id = job_store.create()
     job_store.set_status(job_id, "running")
@@ -121,7 +107,7 @@ def fetch_table(request: FetchRequest, background_tasks: BackgroundTasks):
         status=JobStatus.RUNNING,
         tables=[request.table_name],
         row_count=0,
-        message=f"กำลังดึงข้อมูลจากตาราง '{request.table_name}'...",
+        message=f"Fetching data from table '{request.table_name}'...",
     )
 
 
@@ -139,16 +125,16 @@ def _fetch_task(job_id: str, request: FetchRequest):
 # JOB STATUS
 # ---------------------------------------------------------------
 
-@router.get("/jobs", summary="ดูสถานะ jobs ทั้งหมด")
+@router.get("/jobs", summary="List all jobs")
 def list_jobs():
     return {"jobs": job_store.list_jobs()}
 
 
-@router.get("/jobs/{job_id}", summary="ดูสถานะ job")
+@router.get("/jobs/{job_id}", summary="Get job status")
 def get_job(job_id: str):
     job = job_store.get(job_id)
     if not job:
-        raise HTTPException(status_code=404, detail=f"ไม่พบ job_id: {job_id}")
+        raise HTTPException(status_code=404, detail=f"job_id not found: {job_id}")
     return {
         "job_id":    job["id"],
         "status":    job["status"],
@@ -157,8 +143,9 @@ def get_job(job_id: str):
         "error":     job.get("error"),
     }
 
+
 # ---------------------------------------------------------------
-# AGENT PUSH — รับข้อมูลจาก Docker Agent ของบริษัท
+# AGENT PUSH — Receive data from Docker Agent
 # ---------------------------------------------------------------
 
 class AgentPushRequest(BaseModel):
@@ -168,26 +155,25 @@ class AgentPushRequest(BaseModel):
     synced_at:  str
     api_key:    Optional[str] = None
 
-@router.post("/push", summary="รับข้อมูลจาก Docker Agent")
+
+@router.post("/push", summary="Receive data from Docker Agent")
 def agent_push(request: AgentPushRequest, req: Request, background_tasks: BackgroundTasks):
-    # ตรวจสอบ API Key จาก header
-    api_key = req.headers.get("X-API-Key", "")
+    api_key  = req.headers.get("X-API-Key", "")
     expected = os.getenv("AGENT_API_KEY", "dev-key")
     if api_key != expected:
         raise HTTPException(status_code=401, detail="Invalid API Key")
 
     if not request.data:
-        raise HTTPException(status_code=400, detail="ไม่มีข้อมูล")
+        raise HTTPException(status_code=400, detail="No data provided")
 
     try:
         df = pd.DataFrame(request.data)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"แปลงข้อมูลไม่ได้: {e}")
+        raise HTTPException(status_code=400, detail=f"Cannot convert data: {e}")
 
     job_id = job_store.create()
     job_store.update(job_id, data=df, status="done")
 
-    # รัน auto pipeline ใน background
     background_tasks.add_task(
         run_auto_pipeline,
         job_id=job_id,
@@ -203,7 +189,6 @@ def agent_push(request: AgentPushRequest, req: Request, background_tasks: Backgr
         "rows":       len(df),
         "columns":    list(df.columns),
         "synced_at":  request.synced_at,
-        "message":    f"✅ รับข้อมูล '{request.table_name}' สำเร็จ {len(df)} แถว",
+        "message":    f"Data '{request.table_name}' received — {len(df)} rows",
         "next_step":  f"POST /pipeline/clean  body: {{\"job_id\": \"{job_id}\"}}",
     }
-
