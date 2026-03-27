@@ -1,17 +1,26 @@
-fastapi
-uvicorn[standard]
-pandas
-sqlalchemy
-pymysql
-anthropic
-python-dotenv
-pydantic
-plotly
-kaleido
-weasyprint
-xhtml2pdf
-psycopg2-binary
-python-multipart
-schedule
-pyyaml
-requests
+# Core
+fastapi==0.111.0
+uvicorn[standard]==0.30.1
+python-multipart==0.0.9
+pydantic==2.7.1
+
+# Data
+pandas==2.2.2
+numpy==1.26.4
+
+# AI Providers
+anthropic==0.28.0
+google-generativeai==0.7.2
+requests==2.32.3
+
+# PDF Export
+weasyprint==62.3
+
+# Database (SQL Agent)
+sqlalchemy==2.0.30
+psycopg2-binary==2.9.9
+pymysql==1.1.1
+
+# Utils
+python-dotenv==1.0.1
+schedule==1.2.2

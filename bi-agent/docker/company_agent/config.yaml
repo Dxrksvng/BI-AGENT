@@ -1,19 +1,23 @@
-# config.yaml — ไฟล์ที่บริษัทแก้ไขก่อนรัน Docker
-# ไฟล์นี้เก็บอยู่ใน server บริษัท ไม่ได้ส่งขึ้น cloud
+# BI Agent — Company Docker Agent Config
+# Fill in your database credentials and save this file.
+# Never commit this file to GitHub (already in .gitignore)
 
 database:
-  type: postgres          # postgres หรือ mysql
-  host: localhost
-  port: 5432
+  type: postgres          # postgres | mysql
+  host: your-db-host
+  port: 5432              # 5432 for postgres, 3306 for mysql
   name: your_database
   username: readonly_user
-  password: your_password  # ใช้ read-only user เท่านั้น!
+  password: your_password
 
 agent:
-  api_url: https://your-bi-agent.com   # URL ของ BI Agent ที่ deploy
-  api_key: your_company_api_key        # รับจากหน้า Settings ใน BI Agent
+  api_url: http://localhost:8000          # or your Railway URL
+  api_key: your_secret_api_key_here      # must match AGENT_API_KEY in .env
+  company_name: My Company
+  industry: general
   tables:
     - sales
     - customers
     - orders
-  sync_interval_minutes: 60            # sync ทุกกี่นาที
+  sync_interval_minutes: 60              # how often to sync (60 = every hour)
+  sync_time: "08:00"                     # daily sync time (HH:MM)

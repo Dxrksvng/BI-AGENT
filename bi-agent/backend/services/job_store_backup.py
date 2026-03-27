@@ -17,8 +17,6 @@ import pickle
 from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
 import pandas as pd
-from dotenv import load_dotenv
-load_dotenv(override=True, dotenv_path=os.path.join(os.path.dirname(__file__), "..", ".env"))
 
 # ─── Try Redis ────────────────────────────────────────────────────────────────
 try:

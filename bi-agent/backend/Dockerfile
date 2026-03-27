@@ -2,22 +2,35 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+# Install system dependencies for WeasyPrint + Node.js
+RUN apt-get update && apt-get install -y \
+    curl \
+    libpango-1.0-0 \
+    libpangoft2-1.0-0 \
+    libpangocairo-1.0-0 \
+    libgdk-pixbuf2.0-0 \
+    libcairo2 \
+    libffi-dev \
+    shared-mime-info \
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
+    && rm -rf /var/lib/apt/lists/*
+
+# Python deps
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir redis sqlalchemy psycopg2-binary
 
-COPY connector.py .
+# Node deps for pptxgenjs
+COPY services/package.json services/
+RUN cd services && npm install pptxgenjs
 
-VOLUME ["/config"]
+# App code
+COPY . .
 
-CMD ["python", "connector.py"]
-```
+# Create reports directory
+RUN mkdir -p /app/reports /app/fonts
 
-**`docker/company_agent/requirements.txt`:**
-```
-sqlalchemy
-psycopg2-binary
-pymysql
-pandas
-requests
-pyyaml
-schedule
+EXPOSE 8000
+
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]

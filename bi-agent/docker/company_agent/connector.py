@@ -1,100 +1,173 @@
 """
 docker/company_agent/connector.py
-ตัวนี้คือ Docker container ที่บริษัทโหลดไปรันใน server ตัวเอง
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BI Agent — Company Docker Agent
 
-ทำหน้าที่:
-  1. อ่าน config.yaml (connection string ของบริษัท)
-  2. เชื่อมต่อ database
-  3. ดึงข้อมูลตาม schedule
-  4. ส่งมาที่ BI Agent API (ฝั่งคุณ)
+Runs inside the company's own server.
+Connects to MySQL/PostgreSQL, queries tables on schedule,
+and sends data to the BI Agent API automatically.
 
-บริษัทไม่ต้องส่ง password มาที่ cloud โดยตรง
-ข้อมูลถูกเข้ารหัสด้วย HTTPS
+DB credentials never leave the company server.
+Only query results are transmitted over HTTPS.
+
+Usage:
+    python connector.py
+    # or via Docker:
+    docker run -v $(pwd)/config.yaml:/config/config.yaml bi-agent-connector
 """
 
 import os
-import yaml
+import json
+import time
+import schedule
 import requests
 import pandas as pd
-import sqlalchemy
-import schedule
-import time
-import logging
 from datetime import datetime
+from pathlib import Path
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-logger = logging.getLogger("company-agent")
+try:
+    import yaml
+except ImportError:
+    import subprocess
+    subprocess.run(["pip", "install", "pyyaml"], check=True)
+    import yaml
 
-# โหลด config จากไฟล์ (mount เข้า Docker volume)
-CONFIG_PATH = os.getenv("CONFIG_PATH", "/config/config.yaml")
+try:
+    from sqlalchemy import create_engine, text
+except ImportError:
+    import subprocess
+    subprocess.run(["pip", "install", "sqlalchemy", "psycopg2-binary", "pymysql"], check=True)
+    from sqlalchemy import create_engine, text
 
+
+# ─── Load Config ─────────────────────────────────────────────────────────────
 
 def load_config() -> dict:
-    with open(CONFIG_PATH) as f:
-        return yaml.safe_load(f)
+    paths = [
+        "/config/config.yaml",          # Docker mount path
+        "config.yaml",                  # local dev
+        os.path.expanduser("~/config.yaml"),
+    ]
+    for p in paths:
+        if Path(p).exists():
+            with open(p) as f:
+                return yaml.safe_load(f)
+    raise FileNotFoundError("config.yaml not found. Mount it at /config/config.yaml")
 
 
-def build_engine(cfg: dict):
-    db = cfg["database"]
-    if db["type"] == "postgres":
-        url = f"postgresql://{db['username']}:{db['password']}@{db['host']}:{db['port']}/{db['name']}"
-    elif db["type"] == "mysql":
-        url = f"mysql+pymysql://{db['username']}:{db['password']}@{db['host']}:{db['port']}/{db['name']}"
+# ─── Database Connection ──────────────────────────────────────────────────────
+
+def build_connection_url(db: dict) -> str:
+    db_type = db["type"].lower()
+    host    = db["host"]
+    port    = db.get("port", 5432 if db_type == "postgres" else 3306)
+    name    = db["name"]
+    user    = db["username"]
+    pw      = db["password"]
+
+    if db_type in ("postgres", "postgresql"):
+        return f"postgresql+psycopg2://{user}:{pw}@{host}:{port}/{name}"
+    elif db_type == "mysql":
+        return f"mysql+pymysql://{user}:{pw}@{host}:{port}/{name}"
     else:
-        raise ValueError(f"ไม่รองรับ db type: {db['type']}")
-
-    return sqlalchemy.create_engine(url, connect_args={"connect_timeout": 10})
+        raise ValueError(f"Unsupported database type: {db_type}")
 
 
-def sync_tables(cfg: dict, engine):
-    """ดึงข้อมูลจากทุกตารางที่กำหนดใน config แล้วส่งไป API"""
-    api_url = cfg["agent"]["api_url"]   # URL ของ BI Agent ของคุณ
-    api_key = cfg["agent"]["api_key"]   # API Key ที่ออกให้บริษัทนี้
-    tables  = cfg["agent"]["tables"]    # รายชื่อตารางที่ต้องการ sync
+def fetch_table(engine, table_name: str, limit: int = 10000) -> pd.DataFrame:
+    query = text(f"SELECT * FROM {table_name} LIMIT :limit")
+    with engine.connect() as conn:
+        df = pd.read_sql(query, conn, params={"limit": limit})
+    return df
+
+
+# ─── Send to BI Agent ─────────────────────────────────────────────────────────
+
+def push_to_bi_agent(df: pd.DataFrame, table_name: str, config: dict) -> dict:
+    agent_cfg    = config["agent"]
+    api_url      = agent_cfg["api_url"].rstrip("/")
+    api_key      = agent_cfg["api_key"]
+    company_name = agent_cfg.get("company_name", "Company")
+    industry     = agent_cfg.get("industry", "general")
+
+    payload = {
+        "table_name": table_name,
+        "data":       df.to_dict(orient="records"),
+        "row_count":  len(df),
+        "synced_at":  datetime.utcnow().isoformat(),
+    }
 
     headers = {
-        "X-API-Key":    api_key,
+        "X-API-Key":  api_key,
+        "X-Company":  company_name,
+        "X-Industry": industry,
         "Content-Type": "application/json",
     }
 
+    resp = requests.post(
+        f"{api_url}/ingest/push",
+        json=payload,
+        headers=headers,
+        timeout=60,
+    )
+    resp.raise_for_status()
+    return resp.json()
+
+
+# ─── Main Sync Job ────────────────────────────────────────────────────────────
+
+def sync_all_tables(config: dict):
+    db_cfg  = config["database"]
+    tables  = config["agent"].get("tables", [])
+
+    print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Starting sync...")
+
+    try:
+        url    = build_connection_url(db_cfg)
+        engine = create_engine(url, pool_pre_ping=True)
+        print(f"Connected to {db_cfg['type']} at {db_cfg['host']}")
+    except Exception as e:
+        print(f"DB connection failed: {e}")
+        return
+
     for table in tables:
         try:
-            logger.info(f"กำลังดึงข้อมูลจากตาราง: {table}")
-            df = pd.read_sql(f'SELECT * FROM "{table}" LIMIT 100000', engine)
+            print(f"  Fetching {table}...")
+            df = fetch_table(engine, table)
+            print(f"  {table}: {len(df)} rows, {len(df.columns)} columns")
 
-            # แปลงเป็น JSON แล้วส่งไป API
-            payload = {
-                "table_name": table,
-                "data":       df.to_dict(orient="records"),
-                "row_count":  len(df),
-                "synced_at":  datetime.utcnow().isoformat(),
-            }
-
-            resp = requests.post(
-                f"{api_url}/ingest/push",
-                json=payload,
-                headers=headers,
-                timeout=60,
-            )
-            resp.raise_for_status()
-            logger.info(f"ส่งข้อมูล '{table}' สำเร็จ: {len(df)} แถว → job_id={resp.json().get('job_id')}")
+            result = push_to_bi_agent(df, table, config)
+            print(f"  Pushed to BI Agent — job_id: {result.get('job_id', '?')[:8]}...")
 
         except Exception as e:
-            logger.error(f"ส่งข้อมูล '{table}' ล้มเหลว: {e}")
+            print(f"  Error syncing {table}: {e}")
 
+    engine.dispose()
+    print(f"Sync complete — {len(tables)} table(s) processed")
+
+
+# ─── Scheduler ───────────────────────────────────────────────────────────────
 
 def main():
-    cfg    = load_config()
-    engine = build_engine(cfg)
+    config       = load_config()
+    agent_cfg    = config["agent"]
+    interval_min = agent_cfg.get("sync_interval_minutes", 60)
+    sync_time    = agent_cfg.get("sync_time", "08:00")
 
-    interval_minutes = cfg["agent"].get("sync_interval_minutes", 60)
-    logger.info(f"BI Agent Connector เริ่มทำงาน — sync ทุก {interval_minutes} นาที")
+    print("BI Agent — Docker Connector")
+    print(f"Database: {config['database']['type']} @ {config['database']['host']}")
+    print(f"Tables:   {', '.join(agent_cfg.get('tables', []))}")
+    print(f"API:      {agent_cfg['api_url']}")
+    print(f"Schedule: every {interval_min} min + daily at {sync_time}")
+    print()
 
-    # รัน sync ครั้งแรกทันที
-    sync_tables(cfg, engine)
+    # Run immediately on startup
+    sync_all_tables(config)
 
-    # แล้วรัน schedule ต่อไป
-    schedule.every(interval_minutes).minutes.do(sync_tables, cfg=cfg, engine=engine)
+    # Schedule daily at fixed time
+    schedule.every().day.at(sync_time).do(sync_all_tables, config)
+
+    # Also schedule by interval
+    schedule.every(interval_min).minutes.do(sync_all_tables, config)
 
     while True:
         schedule.run_pending()
