@@ -1,0 +1,38 @@
+# AI Provider: ollama | gemini | claude
+AI_PROVIDER=ollama
+
+# Ollama (local)
+OLLAMA_MODEL=qwen2.5:latest
+OLLAMA_URL=http://localhost:11434
+
+# Gemini
+GEMINI_API_KEY=AIzaSyAJbvhfOtx_nl_I54lefxv6aqwVmbzadQA
+
+# Claude
+ANTHROPIC_API_KEY=your_anthropic_api_key
+
+# Security
+AGENT_API_KEY=your_secret_api_key_here
+
+# Reports output directory
+REPORTS_DIR=./reports
+DATABASE_URL=postgresql+psycopg2://bi_user:bi_secret@localhost:5432/bi_agent
+REDIS_URL=redis://localhost:6379/0
+
+# Email Notifications (Gmail)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your@gmail.com
+SMTP_PASSWORD=gsuv qrli gnua cqwd
+NOTIFY_EMAIL=recipient@company.com
+
+# Slack Notifications
+SLACK_WEBHOOK_URL=https://hooks.slack.com/services/xxx/yyy/zzz
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=nattakamon0208@gmail.com
+SMTP_PASSWORD=gsuv qrli gnua cqwd
+NOTIFY_EMAIL=nattakamon0208@gmail.com
+SLACK_WEBHOOK_URL=
+AI_PROVIDER=ollama
+GLM_API_KEY=62d23c5aabe6440aafc2f0f030d1f1a9.Eu2P7xRGmsbkMXIQ

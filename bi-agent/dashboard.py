@@ -355,7 +355,7 @@ elif st.session_state.step == 4:
                 r = requests.post(
                     f"{API_URL}/export/pptx/{st.session_state.job_id}",
                     params={"company_name": co, "industry": "general"},
-                    timeout=90,
+                    timeout=600,
                 )
             if r.status_code == 200:
                 st.download_button(

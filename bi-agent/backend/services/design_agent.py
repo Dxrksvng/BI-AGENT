@@ -6,12 +6,12 @@ Dynamic Consulting Presentation Designer
 AI เลือก layout + theme + visual style ใหม่ทุกครั้ง
 ตามลักษณะของ dataset และ business context
 """
+import time # เพิ่มสิ่งนี้
 import random
 import hashlib
 from dataclasses import dataclass, field
 from typing import List
 import pandas as pd
-
 
 @dataclass
 class ColorPalette:
@@ -122,3 +122,47 @@ def choose_design(analysis: dict, report: dict, df: pd.DataFrame, company_name: 
         font_size_body=sizes[2], font_size_kpi=sizes[3],
         design_seed=seed,
     )
+# services/design_agent.py
+def get_design_spec(df: pd.DataFrame, report: dict, analysis: dict) -> DesignSpec:
+    # เปลี่ยนจากเดิมที่ใช้ hashlib.md5(...) เป็น:
+    # ถ้าอยากให้กดใหม่ได้ใหม่เสมอ ใช้ time.time_ns()
+    # ถ้าอยากให้เปลี่ยนตามอารมณ์ AI ให้รับ seed มาจากข้างนอก
+    current_seed = int(time.time() * 1000) % (2**32)
+    rng = random.Random(current_seed) 
+    
+    # เพิ่มความหลากหลายให้ Palette
+    # แทนที่จะ if/else แข็งๆ ให้ใช้การถ่วงน้ำหนัก (Weights)
+    if has_revenue:
+        # มีโอกาส 70% ได้ Midnight, 30% ได้สีอื่นเพื่อให้ดูแปลกใหม่
+        palette = rng.choices(PALETTES, weights=[50, 10, 10, 10, 10, 10], k=1)[0]
+
+def generate_design_spec(stat_dict, industry, theme, slide_count):
+
+    seed = int(hashlib.md5(
+        f"{industry}-{theme}-{slide_count}".encode()
+    ).hexdigest(),16) % 10_000
+
+    random.seed(seed)
+
+    palette = random.choice(PALETTES)
+
+    layout = LayoutSpec(
+        name=random.choice([
+            "consulting_modern",
+            "executive_clean",
+            "data_storytelling",
+            "minimal_boardroom"
+        ]),
+        kpi_position=random.choice(["top","grid"]),
+        chart_style=random.choice(["full_width","split"]),
+        insight_style=random.choice(["callout","cards"]),
+        rec_style=random.choice(["steps","columns"]),
+        use_dividers=slide_count>10,
+        use_section_icons=random.choice([True,False]),
+    )
+
+    return {
+        "palette": palette.__dict__,
+        "layout": layout.__dict__,
+        "seed": seed
+    }
