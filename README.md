@@ -1,6 +1,8 @@
 <div align="center">
-![Demo](tests/web_page.png)
-  
+
+<p align="center">
+  <img src="tests/web_page.png" width="600"/>
+</p>
 # ⚡ BI Agent
 
 ### AI-Powered Business Intelligence — From Raw Data to Boardroom Decks
