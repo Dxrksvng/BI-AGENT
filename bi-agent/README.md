@@ -1,5 +1,8 @@
 # BI-Agent
 
+<p align="center">
+  <img src="'/Users/jswvn/Desktop/missj/My-project/BI-AGENT/tests/ChatGPT Image 30 มี.ค. 2569 03_41_57.png'" width="600"/>
+</p>
 AI-Powered Business Intelligence Automation Platform
 
 ![Python](https://img.shields.io/badge/python-3.10-blue)
