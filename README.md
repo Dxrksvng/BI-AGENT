@@ -40,7 +40,7 @@
 ## 🏗️ System Architecture
 
 <p align="center">
-  <img src="tests/tests/diagram-export-3-31-2026-8_43_41-AM.png.png" width="600"/>
+  <img src="tests/diagram.png" width="600"/>
 </p>
 
 ```
