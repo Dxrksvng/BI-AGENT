@@ -36,6 +36,10 @@
 
 ## 🏗️ System Architecture
 
+<p align="center">
+  <img src="tests/dash board.png" width="600"/>
+</p>
+
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
 │                          TWO INGESTION MODES                             │
