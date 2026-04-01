@@ -7,6 +7,9 @@
 <p align="center">
   <img src="tests/web_page.png" width="600"/>
 </p>
+<p align="center">
+  <img src="tests/dash board.png" width="600"/>
+</p>
 
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
@@ -37,7 +40,7 @@
 ## 🏗️ System Architecture
 
 <p align="center">
-  <img src="tests/dash board.png" width="600"/>
+  <img src="tests/tests/diagram-export-3-31-2026-8_43_41-AM.png.png" width="600"/>
 </p>
 
 ```
